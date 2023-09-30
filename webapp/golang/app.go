@@ -3,6 +3,7 @@ package main
 import (
 	crand "crypto/rand"
 	"fmt"
+	"github.com/go-chi/chi"
 	"html/template"
 	"io"
 	"log"
@@ -397,6 +398,27 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
+
+	// Postのダミーデータを作成
+	p := Post{
+		ID:           12345,
+		UserID:       12345,
+		Imgdata:      []byte{},
+		Body:         "test",
+		Mime:         "image/jpeg",
+		CreatedAt:    time.Now(),
+		CommentCount: 0,
+		Comments:     []Comment{},
+		User:         User{},
+		CSRFToken:    "",
+	}
+
+	posts = append([]Post{p}, posts...)
+	fmt.Printf("■■■■■■■■■■■■■■■■■■■■■■■%+v\n", posts)
+
+
+
+
 
 	fmap := template.FuncMap{
 		"imageURL": imageURL,
