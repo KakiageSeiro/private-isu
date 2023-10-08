@@ -207,23 +207,9 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
-		// 投稿したユーザーを取得
-		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
-		if err != nil {
-			return nil, err
-		}
-
 		p.CSRFToken = csrfToken
 
-		// 削除されていないユーザーの投稿のみ表示する
-		if p.User.DelFlg == 0 {
-			posts = append(posts, p)
-		}
-
-		// 20件に制限
-		if len(posts) >= postsPerPage {
-			break
-		}
+		posts = append(posts, p)
 	}
 
 	return posts, nil
@@ -394,7 +380,7 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 	results := []Post{}
 
 	sql :=
-		"SELECT posts.id, posts.user_id, posts.body, posts.mime, posts.created_at " +
+		"SELECT posts.id, posts.user_id, posts.body, posts.mime, users.account_name " +
 		"FROM `posts` " +
 		"JOIN `users` " +
 			"ON (posts.user_id = users.id) " +
