@@ -374,8 +374,18 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
+
+
+	var result_dto_list []struct {
+		ID           int    `db:"id"`
+		UserID       int    `db:"user_id"`
+		Body         string `db:"body"`
+		Mime         string `db:"mime"`
+		AccountName  string `db:"account_name"`
+	}
 
 	results := []Post{}
 
@@ -387,11 +397,33 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		"WHERE users.del_flg = 0 " +
 		"ORDER BY posts.created_at DESC " +
 		"LIMIT 20"
-	err := db.Select(&results, sql)
+	err := db.Select(&result_dto_list, sql)
 	if err != nil {
 		log.Print(err)
 		return
 	}
+
+
+	// 結果をPost構造体にマッピング
+	for _, result_dto := range result_dto_list {
+		post := Post{
+			ID:           result_dto.ID,
+			UserID:       result_dto.UserID,
+			Body:         result_dto.Body,
+			Mime:         result_dto.Mime,
+		}
+		// ここでUserフィールドを埋める
+		post.User = User{
+			AccountName: result_dto.AccountName,
+		}
+
+		// resultsにPostを追加
+		results = append(results, post)
+	}
+
+
+
+
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {
