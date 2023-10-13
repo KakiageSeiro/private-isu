@@ -463,13 +463,49 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := []Post{}
 
-	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
+	var result_dto_list []struct {
+		ID           int    `db:"id"`
+		UserID       int    `db:"user_id"`
+		Body         string `db:"body"`
+		Mime         string `db:"mime"`
+		AccountName  string `db:"account_name"`
+	}
+
+	results := []Post{}
+	sql :=
+		"SELECT posts.id, posts.user_id, posts.body, posts.mime, users.account_name " +
+			"FROM `posts` " +
+			"JOIN `users` " +
+			"ON (posts.user_id = users.id) " +
+			"WHERE users.del_flg = 0 " +
+			"AND posts.user_id = ? " +
+			"ORDER BY posts.created_at DESC " +
+			"LIMIT 20"
+	err = db.Select(&result_dto_list, sql, user.ID)
 	if err != nil {
 		log.Print(err)
 		return
 	}
+
+	// 結果をPost構造体にマッピング
+	for _, result_dto := range result_dto_list {
+		post := Post{
+			ID:           result_dto.ID,
+			UserID:       result_dto.UserID,
+			Body:         result_dto.Body,
+			Mime:         result_dto.Mime,
+		}
+		// ここでUserフィールドを埋める
+		post.User = User{
+			AccountName: result_dto.AccountName,
+		}
+
+		// resultsにPostを追加
+		results = append(results, post)
+	}
+
+
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {
@@ -553,11 +589,49 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+	var result_dto_list []struct {
+		ID           int    `db:"id"`
+		UserID       int    `db:"user_id"`
+		Body         string `db:"body"`
+		Mime         string `db:"mime"`
+		AccountName  string `db:"account_name"`
+	}
+
+	sql :=
+		"SELECT posts.id, posts.user_id, posts.body, posts.mime, users.account_name " +
+			"FROM `posts` " +
+			"JOIN `users` " +
+			"ON (posts.user_id = users.id) " +
+			"WHERE users.created_at = 0 " +
+			"AND posts.del_flg <= ? " +
+			"ORDER BY posts.created_at DESC " +
+			"LIMIT 20"
+	err = db.Select(&result_dto_list, sql, t.Format(ISO8601Format))
 	if err != nil {
 		log.Print(err)
 		return
 	}
+
+
+	// 結果をPost構造体にマッピング
+	for _, result_dto := range result_dto_list {
+		post := Post{
+			ID:           result_dto.ID,
+			UserID:       result_dto.UserID,
+			Body:         result_dto.Body,
+			Mime:         result_dto.Mime,
+		}
+		// ここでUserフィールドを埋める
+		post.User = User{
+			AccountName: result_dto.AccountName,
+		}
+
+		// resultsにPostを追加
+		results = append(results, post)
+	}
+
+
+
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {
@@ -589,11 +663,49 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT * FROM `posts` WHERE `id` = ?", pid)
+	var result_dto_list []struct {
+		ID           int    `db:"id"`
+		UserID       int    `db:"user_id"`
+		Body         string `db:"body"`
+		Mime         string `db:"mime"`
+		AccountName  string `db:"account_name"`
+	}
+
+	sql :=
+		"SELECT posts.id, posts.user_id, posts.body, posts.mime, users.account_name " +
+			"FROM `posts` " +
+			"JOIN `users` " +
+			"ON (posts.user_id = users.id) " +
+			"WHERE users.del_flg = 0 " +
+			"AND posts.id = ? " +
+			"ORDER BY posts.created_at DESC " +
+			"LIMIT 20"
+	err = db.Select(&result_dto_list, sql, pid)
 	if err != nil {
 		log.Print(err)
 		return
 	}
+
+
+	// 結果をPost構造体にマッピング
+	for _, result_dto := range result_dto_list {
+		post := Post{
+			ID:           result_dto.ID,
+			UserID:       result_dto.UserID,
+			Body:         result_dto.Body,
+			Mime:         result_dto.Mime,
+		}
+		// ここでUserフィールドを埋める
+		post.User = User{
+			AccountName: result_dto.AccountName,
+		}
+
+		// resultsにPostを追加
+		results = append(results, post)
+	}
+
+
+
 
 	posts, err := makePosts(results, getCSRFToken(r), true)
 	if err != nil {
