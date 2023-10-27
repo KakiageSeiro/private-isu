@@ -23,6 +23,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
+
+	"net/http/pprof"
 )
 
 var (
@@ -1112,5 +1114,18 @@ func main() {
 		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	r.HandleFunc("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
+
+	server := &http.Server{
+		Addr:         ":8080", 				// サーバーのポート
+		Handler:      r,       				// ルーターを設定
+		ReadTimeout:  110 * time.Second, 	// リクエストの読み取りタイムアウト
+		WriteTimeout: 110 * time.Second, 	// レスポンスの書き込みタイムアウト
+	}
+	log.Fatal(server.ListenAndServe())
 }
